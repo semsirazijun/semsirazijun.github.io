@@ -10,99 +10,66 @@
             src: url('semsira.ttf');
         }
         body { 
-            font-family: sans-serif; 
-            background: #1a1a1a; 
-            color: #eee; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            padding: 20px; 
+            font-family: sans-serif; background: #1a1a1a; color: #eee; 
+            display: flex; flex-direction: column; align-items: center; padding: 20px; 
         }
         .controls { 
-            background: #333; 
-            padding: 20px; 
-            border-radius: 12px; 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 15px; 
-            width: 100%; 
-            max-width: 900px; 
+            background: #333; padding: 20px; border-radius: 12px; 
+            display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; max-width: 900px; 
         }
-        /* 拖拽区域样式 */
         .input-item { 
-            display: flex; 
-            flex-direction: column; 
-            padding: 10px;
-            border: 2px dashed #444;
-            border-radius: 8px;
-            transition: all 0.3s;
+            display: flex; flex-direction: column; padding: 10px; border: 2px dashed #444;
+            border-radius: 8px; transition: all 0.3s;
         }
-        .input-item.drag-over {
-            border-color: #e67e22;
-            background: rgba(230, 126, 34, 0.1);
-        }
+        .input-item.drag-over { border-color: #e67e22; background: rgba(230, 126, 34, 0.1); }
         label { font-size: 12px; color: #aaa; margin-bottom: 5px; }
-        input[type="file"] { color: #888; font-size: 12px; }
-        input[type="text"] { 
-            padding: 8px; border-radius: 4px; border: 1px solid #555; 
-            background: #222; color: white; 
-        }
+        input[type="file"] { color: #888; font-size: 11px; }
+        input[type="text"] { padding: 8px; border-radius: 4px; border: 1px solid #555; background: #222; color: white; }
         button { 
-            grid-column: span 2; padding: 15px; background: #e67e22; 
-            border: none; color: white; font-weight: bold; border-radius: 8px; 
-            cursor: pointer; margin-top: 10px; 
+            grid-column: span 2; padding: 15px; background: #e67e22; border: none; 
+            color: white; font-weight: bold; border-radius: 8px; cursor: pointer; margin-top: 10px; 
         }
         button:hover { background: #d35400; }
-        canvas { 
-            margin-top: 20px; border: 5px solid #444; 
-            max-width: 100%; height: auto; background: #fff; 
-        }
+        canvas { margin-top: 20px; border: 5px solid #444; max-width: 100%; height: auto; }
     </style>
 </head>
 <body>
 
-    <h2>SMK Syed Sirajuddin 合成系统</h2>
+    <h2>SMK Syed Sirajuddin 图像合成系统</h2>
 
     <div class="controls">
-        <div class="input-item" data-id="img1"><label>1. 头像照片 (高度+20%)</label><input type="file" id="img1" accept="image/*"></div>
+        <div class="input-item" data-id="img1"><label>1. 头像 (高+20%)</label><input type="file" id="img1" accept="image/*"></div>
         <div class="input-item" data-id="img2"><label>2. 汽车正面 (1:1)</label><input type="file" id="img2" accept="image/*"></div>
         <div class="input-item" data-id="img3"><label>3. 汽车侧面 (1:1)</label><input type="file" id="img3" accept="image/*"></div>
         <div class="input-item" data-id="img4"><label>4. 汽车背面 (1:1)</label><input type="file" id="img4" accept="image/*"></div>
-        <div class="input-item" data-id="img5"><label>5. 驾照正面 (完整展示)</label><input type="file" id="img5" accept="image/*"></div>
-        <div class="input-item" data-id="img6"><label>6. 驾照背面 (完整展示)</label><input type="file" id="img6" accept="image/*"></div>
-        <div class="input-item" data-id="img7"><label>7. 路税照片 (完整展示)</label><input type="file" id="img7" accept="image/*"></div>
-        <div class="input-item"><label>8. 导出文件名</label><input type="text" id="fileName" value="SMKSS_Output"></div>
-        <button onclick="generate()">生成并自动导出</button>
+        <div class="input-item" data-id="img5"><label>5. 驾照正面 (固定比例)</label><input type="file" id="img5" accept="image/*"></div>
+        <div class="input-item" data-id="img6"><label>6. 驾照背面 (固定比例)</label><input type="file" id="img6" accept="image/*"></div>
+        <div class="input-item" data-id="img7"><label>7. 路税照片 (固定比例)</label><input type="file" id="img7" accept="image/*"></div>
+        <div class="input-item"><label>8. 导出文件名</label><input type="text" id="fileName" value="SMKSS_Result"></div>
+        <button onclick="generate()">生成并下载图片</button>
     </div>
 
     <canvas id="mainCanvas"></canvas>
 
 <script>
-    // 权限检查
-    if (sessionStorage.getItem('access_granted') !== 'true') {
-        window.location.href = 'index.html';
-    }
+    if (sessionStorage.getItem('access_granted') !== 'true') { window.location.href = 'index.html'; }
 
     const canvas = document.getElementById('mainCanvas');
     const ctx = canvas.getContext('2d');
     const W = 1000;
-    const H = 1400;
+    const H = 1400; // 总高度
     canvas.width = W;
     canvas.height = H;
 
-    // 处理拖拽逻辑
+    // 拖拽上传支持
     document.querySelectorAll('.input-item').forEach(item => {
         const input = item.querySelector('input[type="file"]');
-        if(!input) return;
-
         item.addEventListener('dragover', (e) => { e.preventDefault(); item.classList.add('drag-over'); });
         item.addEventListener('dragleave', () => { item.classList.remove('drag-over'); });
         item.addEventListener('drop', (e) => {
             e.preventDefault();
             item.classList.remove('drag-over');
-            if (e.dataTransfer.files.length > 0) {
-                input.files = e.dataTransfer.files;
-            }
+            if (e.dataTransfer.files.length > 0) { input.files = e.dataTransfer.files; }
         });
     });
 
@@ -111,35 +78,34 @@
         const logoSemsira = await loadImage('semsira.png');
         const logoSS6 = await loadImage('ss6.png');
 
-        // 1. 背景渐变
+        // 背景渐变
         const grad = ctx.createLinearGradient(0, 0, 0, H);
         grad.addColorStop(0, "#FFB347");
         grad.addColorStop(1, "#FFCC33");
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, W, H);
 
-        // 2. 左上角 Logo
+        // 左上角 Logo
         ctx.drawImage(logoSemsira, 30, 30, 80, 80);
 
-        // 3. 绘制照片 (x, y, w, h, radius, mode)
-        // 头像 (高增加20%: 220 -> 264)
+        // --- 绘制区域 (坐标已根据 校准) ---
+        
+        // 1. 头像 (高度增加20%)
         await drawSmartImage('img1', 30, 30, 240, 264, 15, 'cover');
 
-        // 汽车三连图 (Cover模式)
+        // 2-4. 汽车图 (Cover模式保持1:1)
         await drawSmartImage('img2', 30, 315, 240, 240, 15, 'cover');
         await drawSmartImage('img3', 30, 575, 240, 240, 15, 'cover');
         await drawSmartImage('img4', 30, 835, 240, 240, 15, 'cover');
 
-        // 证件类 (Contain模式: 完整展示不裁剪)
-        await drawSmartImage('img5', 290, 30, 680, 335, 20, 'contain');
-        await drawSmartImage('img6', 290, 385, 680, 335, 20, 'contain');
-        await drawSmartImage('img7', 290, 740, 680, 335, 20, 'contain');
+        // 5-7. 驾照与路税 (Stretch模式：补满、不留白、不裁剪)
+        await drawSmartImage('img5', 290, 30, 680, 335, 20, 'stretch'); 
+        await drawSmartImage('img6', 290, 385, 680, 335, 20, 'stretch');
+        await drawSmartImage('img7', 290, 740, 680, 335, 20, 'stretch');
 
-        // 4. 底部双 Logo
+        // 底部双 Logo 与学校名
         ctx.drawImage(logoSemsira, 50, 1095, 90, 90);
         ctx.drawImage(logoSS6, 155, 1095, 90, 90);
-
-        // 5. 底部文字
         ctx.fillStyle = "black";
         ctx.font = "34px 'SemsiraFont'";
         ctx.textAlign = "center";
@@ -155,47 +121,39 @@
         const img = await new Promise(res => {
             const reader = new FileReader();
             reader.onload = (e) => {
-                const temp = new Image();
-                temp.onload = () => res(temp);
-                temp.src = e.target.result;
+                const t = new Image();
+                t.onload = () => res(t);
+                t.src = e.target.result;
             };
             reader.readAsDataURL(file);
         });
 
         ctx.save();
-        // 3px 黑色边框
+        // 绘制 3px 黑色边框
         ctx.beginPath();
         drawRoundedRectPath(ctx, x - 3, y - 3, w + 6, h + 6, r + 3);
         ctx.fillStyle = "black";
         ctx.fill();
 
-        // 裁剪并填充底色
+        // 裁剪区域
         ctx.beginPath();
         drawRoundedRectPath(ctx, x, y, w, h, r);
         ctx.clip();
-        ctx.fillStyle = "white"; 
-        ctx.fill();
 
-        const imgRatio = img.width / img.height;
-        const targetRatio = w / h;
         let dW, dH, dX, dY;
-
-        if (mode === 'cover') {
+        if (mode === 'stretch') {
+            // 补满方框模式
+            dW = w; dH = h; dX = x; dY = y;
+        } else {
+            // Cover 模式 (等比缩放填满)
+            const imgRatio = img.width / img.height;
+            const targetRatio = w / h;
             if (imgRatio > targetRatio) {
                 dH = h; dW = h * imgRatio;
                 dX = x - (dW - w) / 2; dY = y;
             } else {
                 dW = w; dH = w / imgRatio;
                 dX = x; dY = y - (dH - h) / 2;
-            }
-        } else {
-            // Contain 模式逻辑
-            if (imgRatio > targetRatio) {
-                dW = w; dH = w / imgRatio;
-                dX = x; dY = y + (h - dH) / 2;
-            } else {
-                dH = h; dW = h * imgRatio;
-                dX = x + (w - dW) / 2; dY = y;
             }
         }
 
@@ -221,7 +179,7 @@
     }
 
     function exportImage() {
-        const name = document.getElementById('fileName').value || 'SMKSS_Result';
+        const name = document.getElementById('fileName').value || 'Result';
         const link = document.createElement('a');
         link.download = name + '.png';
         link.href = canvas.toDataURL('image/png');
