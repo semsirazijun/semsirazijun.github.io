@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>SMKSS 高清合成系统 (自动排版版)</title>
+    <title>SMKSS 高清合成系统 (Logo位置微调版)</title>
     <link rel="icon" type="image/png" href="semsira.png">
     <style>
         @font-face { font-family: 'SemsiraFont'; src: url('semsira.ttf'); }
@@ -20,7 +20,7 @@
 </head>
 <body>
 
-    <h2>SMKSS 高清自适应合成系统</h2>
+    <h2>SMKSS 高清图像合成系统</h2>
 
     <div class="controls">
         <div class="input-item" data-id="img1"><label>1. 头像照片</label><input type="file" id="img1" accept="image/*"></div>
@@ -30,8 +30,8 @@
         <div class="input-item" data-id="img5"><label>5. 驾照正面 (原图比例)</label><input type="file" id="img5" accept="image/*"></div>
         <div class="input-item" data-id="img6"><label>6. 驾照背面 (原图比例)</label><input type="file" id="img6" accept="image/*"></div>
         <div class="input-item" data-id="img7"><label>7. 路税照片 (原图比例)</label><input type="file" id="img7" accept="image/*"></div>
-        <div class="input-item"><label>8. 导出文件名</label><input type="text" id="fileName" value="SMKSS_Final_Print"></div>
-        <button onclick="generate()">生成高清 A4 图像</button>
+        <div class="input-item"><label>8. 导出文件名</label><input type="text" id="fileName" value="SMKSS_A4_Final"></div>
+        <button onclick="generate()">生成并下载 A4 图像</button>
     </div>
 
     <canvas id="mainCanvas"></canvas>
@@ -59,18 +59,20 @@
         const logoSemsira = await loadImage('semsira.png');
         const logoSS6 = await loadImage('ss6.png');
 
-        // 1. 背景
+        // 1. 背景绘制
         const grad = ctx.createLinearGradient(0, 0, 0, H);
         grad.addColorStop(0, "#FFB347"); grad.addColorStop(1, "#FFCC33");
         ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
 
-        // 2. 左侧模块
+        // 2. 左侧模块 (汽车图 1:1)
         await drawSmartImage('img1', 75, 75, 600, 660, 40, 'cover');
         await drawSmartImage('img2', 75, 785, 600, 600, 40, 'cover');
         await drawSmartImage('img3', 75, 1435, 600, 600, 40, 'cover');
-        await drawSmartImage('img4', 75, 2085, 600, 600, 40, 'cover');
+        const carBackY = 2085; // 汽车背面起始 Y 坐标
+        const carBackHeight = 600;
+        await drawSmartImage('img4', 75, carBackY, 600, carBackHeight, 40, 'cover');
 
-        // 3. 右侧自适应模块
+        // 3. 右侧模块 (比例自适应)
         const rightX = 725;
         const rightWidth = 1680;
         const spacing = 60;
@@ -81,20 +83,22 @@
         const y7 = y6 + h6 + (h6 > 0 ? spacing : 0);
         const h7 = await drawAdaptiveImage('img7', rightX, y7, rightWidth, 40);
 
-        // 4. 计算底部文字和Logo的动态位置
-        // 结束位置取路税底部或一个安全值
-        const contentBottom = y7 + h7;
-        const footerY = Math.max(contentBottom + 120, 3350); // 确保至少在3350位置，或者路税下方120px
+        // --- 4. 底部 Logo 位置微调 (靠近汽车背面) ---
+        // 汽车背面图片的底部位置是 carBackY + carBackHeight = 2685
+        // 将 Logo 放置在图片下方 45px 的位置，使其靠近汽车图
+        const logoY = carBackY + carBackHeight + 45; 
+        ctx.drawImage(logoSemsira, 120, logoY, 230, 230);
+        ctx.drawImage(logoSS6, 380, logoY, 230, 230);
 
-        // 5. 底部 Logo
-        ctx.drawImage(logoSemsira, 120, footerY - 240, 230, 230);
-        ctx.drawImage(logoSS6, 380, footerY - 240, 230, 230);
+        // --- 5. 学校名称文字 (保持在最底部，防 overlap) ---
+        // 动态计算文字位置，取“路税底部”或“Logo底部”中较大的一个，再加偏移
+        const contentBottom = Math.max(y7 + h7, logoY + 230);
+        const footerTextY = Math.max(contentBottom + 120, 3360);
 
-        // 6. 学校名称文字 (动态位置，确保不重叠)
         ctx.fillStyle = "black";
         ctx.font = "85px 'SemsiraFont'";
         ctx.textAlign = "center";
-        ctx.fillText("SEKOLAH MENENGAH KEBANGSAAN SYED SIRAJUDDIN", W/2, footerY);
+        ctx.fillText("SEKOLAH MENENGAH KEBANGSAAN SYED SIRAJUDDIN", W/2, footerTextY);
 
         exportImage();
     }
@@ -105,7 +109,6 @@
         const img = await loadImageFromFile(file);
         const ratio = img.height / img.width;
         const targetHeight = targetWidth * ratio;
-
         ctx.save();
         ctx.beginPath();
         drawRoundedRectPath(ctx, x - 8, y - 8, targetWidth + 16, targetHeight + 16, radius + 8);
@@ -153,7 +156,7 @@
     function loadImage(src) { return new Promise(res => { const img = new Image(); img.onload = () => res(img); img.src = src; }); }
 
     function exportImage() {
-        const name = document.getElementById('fileName').value || 'SMKSS_Output';
+        const name = document.getElementById('fileName').value || 'SMKSS_Final';
         const link = document.createElement('a');
         link.download = name + '.png';
         link.href = canvas.toDataURL('image/png', 1.0);
