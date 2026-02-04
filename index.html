@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>系统访问验证 | SMKSS</title>
+    <title>Verification System | SMKSS</title>
     <link rel="icon" type="image/png" href="semsira.png">
     <style>
         body {
@@ -110,14 +110,14 @@
 
 <div class="login-card">
     <img src="semsira.png" alt="Logo" class="logo">
-    <h2>身份验证</h2>
-    <p>请输入卡密以访问合成系统</p>
+    <h2>Identity Verification</h2>
+    <p>Enter the password to enter the system</p>
     
     <div class="input-group">
         <input type="password" id="passkey" placeholder="Access Key" onkeypress="if(event.key==='Enter') verify()">
     </div>
     
-    <button id="loginBtn" onclick="verify()">进入系统</button>
+    <button id="loginBtn" onclick="verify()">Enter</button>
     
     <div id="status-msg"></div>
 
@@ -140,14 +140,14 @@
         const btn = document.getElementById('loginBtn');
 
         if (!input) {
-            showMsg("请输入卡密", "error");
+            showMsg("Password...", "error");
             return;
         }
 
         // 锁定界面
         btn.disabled = true;
-        btn.innerText = "验证中...";
-        showMsg("正在核对云端库...", "loading");
+        btn.innerText = "Verify...";
+        showMsg("Matching...", "loading");
 
         try {
             // 构建 raw 内容地址，添加时间戳避免浏览器缓存旧密码
@@ -156,7 +156,7 @@
             const response = await fetch(rawUrl);
             
             if (!response.ok) {
-                throw new Error("密钥库连接失败");
+                throw new Error("Failure to get key");
             }
 
             const data = await response.text();
@@ -164,7 +164,7 @@
             const validKeys = data.split(/\r?\n/).map(k => k.trim()).filter(k => k !== "");
 
             if (validKeys.includes(input)) {
-                showMsg("验证成功！正在跳转...", "loading");
+                showMsg("Success, Login...", "loading");
                 sessionStorage.setItem('access_granted', 'true');
                 
                 // 延迟一小会儿让用户看到成功信息
@@ -172,15 +172,15 @@
                     window.location.href = 'menu.html';
                 }, 800);
             } else {
-                showMsg("卡密错误或已失效", "error");
+                showMsg("Password error", "error");
                 btn.disabled = false;
-                btn.innerText = "进入系统";
+                btn.innerText = "Enter";
                 document.getElementById('passkey').value = "";
             }
         } catch (err) {
-            showMsg("网络异常: " + err.message, "error");
+            showMsg("Wifi Failure: " + err.message, "error");
             btn.disabled = false;
-            btn.innerText = "进入系统";
+            btn.innerText = "Enter";
         }
     }
 
