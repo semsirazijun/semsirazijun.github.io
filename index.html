@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>Semsira 证件合成工具</title>
+    <title>Semsira 证件合成系统</title>
     <link rel="icon" type="image/png" href="semsira.png">
     <style>
         @font-face {
@@ -12,11 +12,11 @@
         body { font-family: sans-serif; background: #1a1a1a; color: #eee; display: flex; flex-direction: column; align-items: center; padding: 20px; }
         .controls { background: #333; padding: 20px; border-radius: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; max-width: 900px; }
         .input-item { display: flex; flex-direction: column; }
-        label { font-size: 12px; color: #aaa; }
-        input { padding: 8px; margin-top: 5px; border-radius: 4px; border: 1px solid #555; background: #222; color: white; }
+        label { font-size: 12px; color: #aaa; margin-bottom: 5px; }
+        input { padding: 8px; border-radius: 4px; border: 1px solid #555; background: #222; color: white; }
         button { grid-column: span 2; padding: 15px; background: #e67e22; border: none; color: white; font-weight: bold; border-radius: 8px; cursor: pointer; margin-top: 10px; }
         button:hover { background: #d35400; }
-        canvas { margin-top: 20px; border: 5px solid #444; max-width: 100%; height: auto; background: white; }
+        canvas { margin-top: 20px; border: 5px solid #444; max-width: 100%; height: auto; background: #ccc; }
     </style>
 </head>
 <body>
@@ -24,15 +24,15 @@
     <h2>SMK Syed Sirajuddin 图像合成系统</h2>
 
     <div class="controls">
-        <div class="input-item"><label>1. 头像照片</label><input type="file" id="img1"></div>
-        <div class="input-item"><label>2. 汽车正面 (1:1)</label><input type="file" id="img2"></div>
-        <div class="input-item"><label>3. 汽车侧面 (1:1)</label><input type="file" id="img3"></div>
-        <div class="input-item"><label>4. 汽车背面 (1:1)</label><input type="file" id="img4"></div>
-        <div class="input-item"><label>5. 驾照正面</label><input type="file" id="img5"></div>
-        <div class="input-item"><label>6. 驾照背面</label><input type="file" id="img6"></div>
-        <div class="input-item"><label>7. 路税照片</label><input type="file" id="img7"></div>
+        <div class="input-item"><label>1. 头像照片 (Height+20%)</label><input type="file" id="img1"></div>
+        <div class="input-item"><label>2. 汽车正面 (1:1 Cover)</label><input type="file" id="img2"></div>
+        <div class="input-item"><label>3. 汽车侧面 (1:1 Cover)</label><input type="file" id="img3"></div>
+        <div class="input-item"><label>4. 汽车背面 (1:1 Cover)</label><input type="file" id="img4"></div>
+        <div class="input-item"><label>5. 驾照正面 (完整显示)</label><input type="file" id="img5"></div>
+        <div class="input-item"><label>6. 驾照背面 (完整显示)</label><input type="file" id="img6"></div>
+        <div class="input-item"><label>7. 路税照片 (完整显示)</label><input type="file" id="img7"></div>
         <div class="input-item"><label>8. 导出文件名</label><input type="text" id="fileName" value="SMKSS_Output"></div>
-        <button onclick="generate()">生成并导出最终图像</button>
+        <button onclick="generate()">生成并导出图像</button>
     </div>
 
     <canvas id="mainCanvas"></canvas>
@@ -46,39 +46,40 @@
     canvas.height = H;
 
     async function generate() {
-        // 加载必要资源
+        // 预加载资源
         await document.fonts.load("1em SemsiraFont");
         const logoSemsira = await loadImage('semsira.png');
         const logoSS6 = await loadImage('ss6.png');
 
-        // 1. 绘制橘黄渐变背景
+        // 1. 绘制背景
         const grad = ctx.createLinearGradient(0, 0, 0, H);
         grad.addColorStop(0, "#FFB347");
         grad.addColorStop(1, "#FFCC33");
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, W, H);
 
-        // 2. 绘制左上角 Logo (semsira.png)
-        ctx.drawImage(logoSemsira, 30, 30, 100, 100);
+        // 2. 左上角 Logo
+        ctx.drawImage(logoSemsira, 30, 30, 80, 80);
 
-        // 3. 绘制照片模块 (x, y, w, h, radius)
-        // 右侧大型证件
-        await drawSmartImage('img1', 30, 30, 240, 220, 15);  // 虽然左上角有Logo，但按你要求头像通常在Logo旁或下方
-        await drawSmartImage('img5', 290, 30, 680, 310, 20); 
-        await drawSmartImage('img6', 290, 360, 680, 310, 20); 
-        await drawSmartImage('img7', 290, 690, 680, 280, 20); 
+        // 3. 绘制照片
+        // 头像：原高 220 -> 增加20% = 264
+        await drawSmartImage('img1', 30, 30, 240, 264, 15, 'cover');
 
-        // 左侧汽车三连图
-        await drawSmartImage('img2', 30, 270, 240, 240, 15);
-        await drawSmartImage('img3', 30, 530, 240, 240, 15);
-        await drawSmartImage('img4', 30, 790, 240, 240, 15);
+        // 汽车三连图 (保持 Cover 填满)
+        await drawSmartImage('img2', 30, 310, 240, 240, 15, 'cover');
+        await drawSmartImage('img3', 30, 565, 240, 240, 15, 'cover');
+        await drawSmartImage('img4', 30, 820, 240, 240, 15, 'cover');
 
-        // 4. 在汽车背面图(img4)下方绘制双 Logo
-        // 位置计算：img4 的 y 是 790，h 是 240，所以下方起始于 1030
-        ctx.drawImage(logoSemsira, 45, 1050, 100, 100);
-        ctx.drawImage(logoSS6, 155, 1050, 100, 100);
+        // 证件类：使用 'contain' 模式完整展示
+        await drawSmartImage('img5', 290, 30, 680, 330, 20, 'contain'); 
+        await drawSmartImage('img6', 290, 380, 680, 330, 20, 'contain'); 
+        await drawSmartImage('img7', 290, 730, 680, 330, 20, 'contain'); 
 
-        // 5. 绘制底部文字
+        // 4. 底部双 Logo
+        ctx.drawImage(logoSemsira, 50, 1080, 90, 90);
+        ctx.drawImage(logoSS6, 150, 1080, 90, 90);
+
+        // 5. 底部文字
         ctx.fillStyle = "black";
         ctx.font = "34px 'SemsiraFont'";
         ctx.textAlign = "center";
@@ -87,17 +88,7 @@
         exportImage();
     }
 
-    // 辅助：加载静态图片
-    function loadImage(src) {
-        return new Promise(res => {
-            const img = new Image();
-            img.onload = () => res(img);
-            img.src = src;
-        });
-    }
-
-    // 核心绘制逻辑：带边框、圆角、等比缩放
-    async function drawSmartImage(inputId, x, y, w, h, r) {
+    async function drawSmartImage(inputId, x, y, w, h, r, mode) {
         const file = document.getElementById(inputId).files[0];
         if (!file) return;
 
@@ -112,28 +103,45 @@
         });
 
         ctx.save();
-        // 绘制 3px 黑色边框
+        // 3px 黑色边框
         ctx.beginPath();
         drawRoundedRectPath(ctx, x - 3, y - 3, w + 6, h + 6, r + 3);
         ctx.fillStyle = "black";
         ctx.fill();
 
-        // 裁剪圆角矩形
+        // 裁剪区域
         ctx.beginPath();
         drawRoundedRectPath(ctx, x, y, w, h, r);
         ctx.clip();
+        
+        // 即使是完整显示，我们也给容器一个背景色（可选，这里设为白色方便看清证件边缘）
+        ctx.fillStyle = "white";
+        ctx.fill();
 
-        // Object-fit: cover 算法
         const imgRatio = img.width / img.height;
         const targetRatio = w / h;
         let dW, dH, dX, dY;
-        if (imgRatio > targetRatio) {
-            dH = h; dW = h * imgRatio;
-            dX = x - (dW - w) / 2; dY = y;
+
+        if (mode === 'cover') {
+            // 填满模式
+            if (imgRatio > targetRatio) {
+                dH = h; dW = h * imgRatio;
+                dX = x - (dW - w) / 2; dY = y;
+            } else {
+                dW = w; dH = w / imgRatio;
+                dX = x; dY = y - (dH - h) / 2;
+            }
         } else {
-            dW = w; dH = w / imgRatio;
-            dX = x; dY = y - (dH - h) / 2;
+            // 完整展示模式 (Contain)
+            if (imgRatio > targetRatio) {
+                dW = w; dH = w / imgRatio;
+                dX = x; dY = y + (h - dH) / 2;
+            } else {
+                dH = h; dW = h * imgRatio;
+                dX = x + (w - dW) / 2; dY = y;
+            }
         }
+
         ctx.drawImage(img, dX, dY, dW, dH);
         ctx.restore();
     }
@@ -147,8 +155,16 @@
         c.closePath();
     }
 
+    function loadImage(src) {
+        return new Promise(res => {
+            const img = new Image();
+            img.onload = () => res(img);
+            img.src = src;
+        });
+    }
+
     function exportImage() {
-        const name = document.getElementById('fileName').value || 'SMKSS_Result';
+        const name = document.getElementById('fileName').value || 'Result';
         const link = document.createElement('a');
         link.download = name + '.png';
         link.href = canvas.toDataURL('image/png');
