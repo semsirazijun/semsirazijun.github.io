@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>SMKSS 高清合成系统 (比例自适应版)</title>
+    <title>SMKSS 高清合成系统 (精调版)</title>
     <link rel="icon" type="image/png" href="semsira.png">
     <style>
         @font-face { font-family: 'SemsiraFont'; src: url('semsira.ttf'); }
@@ -20,7 +20,7 @@
 </head>
 <body>
 
-    <h2>SMKSS 高清自适应合成系统</h2>
+    <h2>SMKSS 高清图像合成系统</h2>
 
     <div class="controls">
         <div class="input-item" data-id="img1"><label>1. 头像照片</label><input type="file" id="img1" accept="image/*"></div>
@@ -30,8 +30,8 @@
         <div class="input-item" data-id="img5"><label>5. 驾照正面 (原图比例)</label><input type="file" id="img5" accept="image/*"></div>
         <div class="input-item" data-id="img6"><label>6. 驾照背面 (原图比例)</label><input type="file" id="img6" accept="image/*"></div>
         <div class="input-item" data-id="img7"><label>7. 路税照片 (原图比例)</label><input type="file" id="img7" accept="image/*"></div>
-        <div class="input-item"><label>8. 导出文件名</label><input type="text" id="fileName" value="SMKSS_A4_FixedRatio"></div>
-        <button onclick="generate()">生成并下载图像</button>
+        <div class="input-item"><label>8. 导出文件名</label><input type="text" id="fileName" value="SMKSS_Final_Output"></div>
+        <button onclick="generate()">生成并下载 A4 高清图</button>
     </div>
 
     <canvas id="mainCanvas"></canvas>
@@ -56,6 +56,10 @@
     });
 
     async function generate() {
+        const btn = document.querySelector('button');
+        btn.innerText = "正在渲染高清 A4 图像...";
+        btn.disabled = true;
+
         await document.fonts.load("1em SemsiraFont");
         const logoSemsira = await loadImage('semsira.png');
         const logoSS6 = await loadImage('ss6.png');
@@ -65,65 +69,61 @@
         grad.addColorStop(0, "#FFB347"); grad.addColorStop(1, "#FFCC33");
         ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
 
-        // 2. 绘制左侧模块 (固定比例)
+        // 2. 绘制左侧模块 (1:1 填充模式)
         await drawSmartImage('img1', 75, 75, 600, 660, 40, 'cover');
         await drawSmartImage('img2', 75, 785, 600, 600, 40, 'cover');
         await drawSmartImage('img3', 75, 1435, 600, 600, 40, 'cover');
         await drawSmartImage('img4', 75, 2085, 600, 600, 40, 'cover');
 
-        // 3. 绘制右侧模块 (比例自适应)
+        // 3. 绘制右侧模块 (自适应比例填充模式)
         const rightX = 725;
         const rightWidth = 1680;
-        const spacing = 50; // 图片之间的间距
+        const spacing = 50;
 
-        // 驾照正面
         const h5 = await drawAdaptiveImage('img5', rightX, 75, rightWidth, 40);
-        // 驾照背面 (紧跟在前一张图下方)
         const h6 = await drawAdaptiveImage('img6', rightX, 75 + h5 + spacing, rightWidth, 40);
-        // 路税照片
         const h7 = await drawAdaptiveImage('img7', rightX, 75 + h5 + spacing + h6 + spacing, rightWidth, 40);
 
-        // 4. 底部元素
+        // 4. 底部 Logo
         ctx.drawImage(logoSemsira, 120, 2730, 230, 230);
         ctx.drawImage(logoSS6, 380, 2730, 230, 230);
-        ctx.fillStyle = "black";
-        ctx.font = "85px 'SemsiraFont'"; ctx.textAlign = "center";
-        ctx.fillText("SEKOLAH MENENGAH KEBANGSAAN SYED SIRAJUDDIN", W/2, H - 150);
 
+        // 5. 底部文字 (向下移动 5px: 从 H-150 变为 H-145)
+        ctx.fillStyle = "black";
+        ctx.font = "85px 'SemsiraFont'";
+        ctx.textAlign = "center";
+        ctx.fillText("SEKOLAH MENENGAH KEBANGSAAN SYED SIRAJUDDIN", W/2, H - 145);
+
+        btn.innerText = "生成并下载 A4 高清图";
+        btn.disabled = false;
         exportImage();
     }
 
-    // 针对证件的自适应绘制函数
+    // 比例自适应绘制 (确保不留白、不裁剪)
     async function drawAdaptiveImage(inputId, x, y, targetWidth, radius) {
         const file = document.getElementById(inputId).files[0];
-        if (!file) return 0; // 如果没上传，返回0高度
-
+        if (!file) return 0;
         const img = await loadImageFromFile(file);
         const ratio = img.height / img.width;
-        const targetHeight = targetWidth * ratio; // 根据原图比例计算高度
+        const targetHeight = targetWidth * ratio;
 
         ctx.save();
-        // 绘制 8px 黑色边框
         ctx.beginPath();
         drawRoundedRectPath(ctx, x - 8, y - 8, targetWidth + 16, targetHeight + 16, radius + 8);
         ctx.fillStyle = "black"; ctx.fill();
-
-        // 裁剪并绘制
         ctx.beginPath();
         drawRoundedRectPath(ctx, x, y, targetWidth, targetHeight, radius);
         ctx.clip();
         ctx.drawImage(img, x, y, targetWidth, targetHeight);
         ctx.restore();
-
-        return targetHeight; // 返回实际高度供下一张图定位
+        return targetHeight;
     }
 
-    // 通用的 1:1 或 Cover 绘制函数
+    // 常规绘制 (1:1 填充模式)
     async function drawSmartImage(inputId, x, y, w, h, r, mode) {
         const file = document.getElementById(inputId).files[0];
         if (!file) return;
         const img = await loadImageFromFile(file);
-        
         ctx.save();
         ctx.beginPath();
         drawRoundedRectPath(ctx, x - 8, y - 8, w + 16, h + 16, r + 8);
@@ -131,13 +131,11 @@
         ctx.beginPath();
         drawRoundedRectPath(ctx, x, y, w, h, r);
         ctx.clip();
-
         const imgRatio = img.width / img.height;
         const targetRatio = w / h;
         let dW, dH, dX, dY;
         if (imgRatio > targetRatio) { dH = h; dW = h * imgRatio; dX = x - (dW - w) / 2; dY = y; }
         else { dW = w; dH = w / imgRatio; dX = x; dY = y - (dH - h) / 2; }
-        
         ctx.drawImage(img, dX, dY, dW, dH);
         ctx.restore();
     }
