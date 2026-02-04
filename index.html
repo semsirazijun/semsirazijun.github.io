@@ -2,33 +2,34 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>证件与车辆合成工具</title>
+    <title>证件合成工具 Pro</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #2c3e50; color: white; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .controls { background: #34495e; padding: 20px; border-radius: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; max-width: 800px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        @font-face {
+            font-family: 'SemsiraFont';
+            src: url('semsira.ttf');
+        }
+        body { font-family: sans-serif; background: #1a1a1a; color: #eee; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .controls { background: #333; padding: 20px; border-radius: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; max-width: 900px; }
         .input-item { display: flex; flex-direction: column; }
-        label { margin-bottom: 5px; font-size: 0.9em; color: #bdc3c7; }
-        input[type="text"], input[type="file"] { padding: 8px; border-radius: 4px; border: none; }
-        button { grid-column: span 2; padding: 15px; background: #e67e22; border: none; color: white; font-weight: bold; border-radius: 8px; cursor: pointer; transition: 0.3s; margin-top: 10px; }
-        button:hover { background: #d35400; }
-        canvas { margin-top: 20px; box-shadow: 0 0 20px rgba(0,0,0,0.5); max-width: 100%; height: auto; border-radius: 5px; }
+        input { padding: 8px; margin-top: 5px; border-radius: 4px; border: 1px solid #555; background: #222; color: white; }
+        button { grid-column: span 2; padding: 15px; background: #ff8c00; border: none; color: white; font-weight: bold; border-radius: 8px; cursor: pointer; margin-top: 10px; }
+        canvas { margin-top: 20px; border: 5px solid #444; max-width: 100%; height: auto; }
     </style>
 </head>
 <body>
 
-    <h2>图片合成预览</h2>
+    <h2>图片本地合成工具</h2>
 
     <div class="controls">
-        <div class="input-item"><label>1. 头像照片</label><input type="file" id="img1"></div>
-        <div class="input-item"><label>2. 汽车正面 (1:1)</label><input type="file" id="img2"></div>
-        <div class="input-item"><label>3. 汽车侧面 (1:1)</label><input type="file" id="img3"></div>
-        <div class="input-item"><label>4. 汽车背面 (1:1)</label><input type="file" id="img4"></div>
-        <div class="input-item"><label>5. 驾照正面</label><input type="file" id="img5"></div>
-        <div class="input-item"><label>6. 驾照背面</label><input type="file" id="img6"></div>
-        <div class="input-item"><label>7. 路税照片</label><input type="file" id="img7"></div>
-        <div class="input-item"><label>8. 导出文件名</label><input type="text" id="fileName" placeholder="例如：my_card_2024"></div>
-        <button onclick="generate()">生成并自动导出图片</button>
+        <div class="input-item"><label>头像照片</label><input type="file" id="img1"></div>
+        <div class="input-item"><label>汽车正面</label><input type="file" id="img2"></div>
+        <div class="input-item"><label>汽车侧面</label><input type="file" id="img3"></div>
+        <div class="input-item"><label>汽车背面</label><input type="file" id="img4"></div>
+        <div class="input-item"><label>驾照正面</label><input type="file" id="img5"></div>
+        <div class="input-item"><label>驾照背面</label><input type="file" id="img6"></div>
+        <div class="input-item"><label>路税照片</label><input type="file" id="img7"></div>
+        <div class="input-item"><label>保存文件名</label><input type="text" id="fileName" value="output_image"></div>
+        <button onclick="generate()">生成并导出</button>
     </div>
 
     <canvas id="mainCanvas"></canvas>
@@ -36,87 +37,109 @@
 <script>
     const canvas = document.getElementById('mainCanvas');
     const ctx = canvas.getContext('2d');
-
-    // 定义画布尺寸 (根据你的比例设定)
     const W = 1000;
     const H = 1400;
     canvas.width = W;
     canvas.height = H;
 
     async function generate() {
-        // 1. 绘制背景渐变
-        const gradient = ctx.createLinearGradient(0, 0, W, H);
-        gradient.addColorStop(0, "#FFD56B");
-        gradient.addColorStop(1, "#FFA259");
-        ctx.fillStyle = gradient;
+        // 1. 等待字体加载
+        await document.fonts.load("1em SemsiraFont");
+
+        // 2. 绘制橘黄渐变背景
+        const grad = ctx.createLinearGradient(0, 0, 0, H);
+        grad.addColorStop(0, "#FFB347");
+        grad.addColorStop(1, "#FFCC33");
+        ctx.fillStyle = grad;
         ctx.fillRect(0, 0, W, H);
 
-        // 2. 绘制各部分
-        // 左侧三张车图 (垂直排列)
-        await drawRoundedImage('img2', 20, 260, 240, 240, 15); // 正面
-        await drawRoundedImage('img3', 20, 520, 240, 240, 15); // 侧面
-        await drawRoundedImage('img4', 20, 780, 240, 240, 15); // 背面
+        // 3. 按照布局绘制图片 (x, y, w, h, radius)
+        // 左侧垂直三张车图
+        await drawSmartImage('img2', 30, 270, 240, 240, 15);
+        await drawSmartImage('img3', 30, 540, 240, 240, 15);
+        await drawSmartImage('img4', 30, 810, 240, 240, 15);
 
-        // 右侧大型区域
-        await drawRoundedImage('img1', 20, 20, 240, 220, 15);  // 左上角头像
-        await drawRoundedImage('img5', 280, 20, 700, 310, 20); // 驾照正面
-        await drawRoundedImage('img6', 280, 350, 700, 310, 20); // 驾照背面
-        await drawRoundedImage('img7', 280, 680, 700, 300, 20); // 路税
+        // 右侧区域
+        await drawSmartImage('img1', 30, 30, 240, 220, 15);  // 头像
+        await drawSmartImage('img5', 290, 30, 680, 320, 20); // 驾照正
+        await drawSmartImage('img6', 290, 370, 680, 320, 20); // 驾照背
+        await drawSmartImage('img7', 290, 710, 680, 340, 20); // 路税
 
-        // 3. 绘制底部文字
+        // 4. 绘制底部文字
         ctx.fillStyle = "black";
-        ctx.font = "bold 36px Arial";
+        ctx.font = "32px 'SemsiraFont', sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText("SEKOLAH MENENGAH KEBANGSAAN SYED SIRAJUDDIN", W/2, H - 50);
+        ctx.fillText("SEKOLAH MENENGAH KEBANGSAAN SYED SIRAJUDDIN", W/2, H - 60);
 
-        // 4. 导出
+        // 5. 自动下载
         exportImage();
     }
 
-    // 封装的圆角图片绘制函数
-    function drawRoundedImage(inputId, x, y, width, height, radius) {
-        return new Promise((resolve) => {
-            const file = document.getElementById(inputId).files[0];
-            if (!file) return resolve();
+    async function drawSmartImage(inputId, x, y, w, h, r) {
+        const file = document.getElementById(inputId).files[0];
+        if (!file) return;
 
+        const img = await new Promise(res => {
             const reader = new FileReader();
             reader.onload = (e) => {
-                const img = new Image();
-                img.onload = () => {
-                    ctx.save();
-                    // 创建圆角路径
-                    ctx.beginPath();
-                    ctx.moveTo(x + radius, y);
-                    ctx.lineTo(x + width - radius, y);
-                    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-                    ctx.lineTo(x + width, y + height - radius);
-                    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-                    ctx.lineTo(x + radius, y + height);
-                    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-                    ctx.lineTo(x, y + radius);
-                    ctx.quadraticCurveTo(x, y, x + radius, y);
-                    ctx.closePath();
-                    ctx.clip(); // 裁剪
-                    
-                    // 绘制图片 (Cover 模式填充)
-                    ctx.drawImage(img, x, y, width, height);
-                    ctx.restore();
-                    resolve();
-                };
-                img.src = e.target.result;
+                const tempImg = new Image();
+                tempImg.onload = () => res(tempImg);
+                tempImg.src = e.target.result;
             };
             reader.readAsDataURL(file);
         });
+
+        ctx.save();
+        
+        // --- 绘制 3px 黑色边框 ---
+        ctx.beginPath();
+        drawRoundedRectPath(ctx, x - 3, y - 3, w + 6, h + 6, r + 3);
+        ctx.fillStyle = "black";
+        ctx.fill();
+
+        // --- 裁剪图片区域 ---
+        ctx.beginPath();
+        drawRoundedRectPath(ctx, x, y, w, h, r);
+        ctx.clip();
+
+        // --- 等比例缩放填充 (Cover 逻辑) ---
+        const imgRatio = img.width / img.height;
+        const targetRatio = w / h;
+        let drawW, drawH, drawX, drawY;
+
+        if (imgRatio > targetRatio) {
+            drawH = h;
+            drawW = h * imgRatio;
+            drawX = x - (drawW - w) / 2;
+            drawY = y;
+        } else {
+            drawW = w;
+            drawH = w / imgRatio;
+            drawX = x;
+            drawY = y - (drawH - h) / 2;
+        }
+
+        ctx.drawImage(img, drawX, drawY, drawW, drawH);
+        ctx.restore();
+    }
+
+    // 绘制圆角矩形路径辅助函数
+    function drawRoundedRectPath(context, x, y, w, h, r) {
+        context.moveTo(x + r, y);
+        context.arcTo(x + w, y, x + w, y + h, r);
+        context.arcTo(x + w, y + h, x, y + h, r);
+        context.arcTo(x, y + h, x, y, r);
+        context.arcTo(x, y, x + w, y, r);
+        context.closePath();
     }
 
     function exportImage() {
-        const name = document.getElementById('fileName').value || 'combined_image';
+        const name = document.getElementById('fileName').value || 'result';
         const link = document.createElement('a');
-        link.download = `${name}.png`;
+        link.download = name + '.png';
         link.href = canvas.toDataURL('image/png');
         link.click();
     }
 </script>
-
 </body>
 </html>
