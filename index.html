@@ -2,7 +2,8 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>证件合成工具 Pro</title>
+    <title>Semsira 证件合成工具</title>
+    <link rel="icon" type="image/png" href="semsira.png">
     <style>
         @font-face {
             font-family: 'SemsiraFont';
@@ -11,25 +12,27 @@
         body { font-family: sans-serif; background: #1a1a1a; color: #eee; display: flex; flex-direction: column; align-items: center; padding: 20px; }
         .controls { background: #333; padding: 20px; border-radius: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; max-width: 900px; }
         .input-item { display: flex; flex-direction: column; }
+        label { font-size: 12px; color: #aaa; }
         input { padding: 8px; margin-top: 5px; border-radius: 4px; border: 1px solid #555; background: #222; color: white; }
-        button { grid-column: span 2; padding: 15px; background: #ff8c00; border: none; color: white; font-weight: bold; border-radius: 8px; cursor: pointer; margin-top: 10px; }
-        canvas { margin-top: 20px; border: 5px solid #444; max-width: 100%; height: auto; }
+        button { grid-column: span 2; padding: 15px; background: #e67e22; border: none; color: white; font-weight: bold; border-radius: 8px; cursor: pointer; margin-top: 10px; }
+        button:hover { background: #d35400; }
+        canvas { margin-top: 20px; border: 5px solid #444; max-width: 100%; height: auto; background: white; }
     </style>
 </head>
 <body>
 
-    <h2>图片本地合成工具</h2>
+    <h2>SMK Syed Sirajuddin 图像合成系统</h2>
 
     <div class="controls">
-        <div class="input-item"><label>头像照片</label><input type="file" id="img1"></div>
-        <div class="input-item"><label>汽车正面</label><input type="file" id="img2"></div>
-        <div class="input-item"><label>汽车侧面</label><input type="file" id="img3"></div>
-        <div class="input-item"><label>汽车背面</label><input type="file" id="img4"></div>
-        <div class="input-item"><label>驾照正面</label><input type="file" id="img5"></div>
-        <div class="input-item"><label>驾照背面</label><input type="file" id="img6"></div>
-        <div class="input-item"><label>路税照片</label><input type="file" id="img7"></div>
-        <div class="input-item"><label>保存文件名</label><input type="text" id="fileName" value="output_image"></div>
-        <button onclick="generate()">生成并导出</button>
+        <div class="input-item"><label>1. 头像照片</label><input type="file" id="img1"></div>
+        <div class="input-item"><label>2. 汽车正面 (1:1)</label><input type="file" id="img2"></div>
+        <div class="input-item"><label>3. 汽车侧面 (1:1)</label><input type="file" id="img3"></div>
+        <div class="input-item"><label>4. 汽车背面 (1:1)</label><input type="file" id="img4"></div>
+        <div class="input-item"><label>5. 驾照正面</label><input type="file" id="img5"></div>
+        <div class="input-item"><label>6. 驾照背面</label><input type="file" id="img6"></div>
+        <div class="input-item"><label>7. 路税照片</label><input type="file" id="img7"></div>
+        <div class="input-item"><label>8. 导出文件名</label><input type="text" id="fileName" value="SMKSS_Output"></div>
+        <button onclick="generate()">生成并导出最终图像</button>
     </div>
 
     <canvas id="mainCanvas"></canvas>
@@ -43,38 +46,57 @@
     canvas.height = H;
 
     async function generate() {
-        // 1. 等待字体加载
+        // 加载必要资源
         await document.fonts.load("1em SemsiraFont");
+        const logoSemsira = await loadImage('semsira.png');
+        const logoSS6 = await loadImage('ss6.png');
 
-        // 2. 绘制橘黄渐变背景
+        // 1. 绘制橘黄渐变背景
         const grad = ctx.createLinearGradient(0, 0, 0, H);
         grad.addColorStop(0, "#FFB347");
         grad.addColorStop(1, "#FFCC33");
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, W, H);
 
-        // 3. 按照布局绘制图片 (x, y, w, h, radius)
-        // 左侧垂直三张车图
+        // 2. 绘制左上角 Logo (semsira.png)
+        ctx.drawImage(logoSemsira, 30, 30, 100, 100);
+
+        // 3. 绘制照片模块 (x, y, w, h, radius)
+        // 右侧大型证件
+        await drawSmartImage('img1', 30, 30, 240, 220, 15);  // 虽然左上角有Logo，但按你要求头像通常在Logo旁或下方
+        await drawSmartImage('img5', 290, 30, 680, 310, 20); 
+        await drawSmartImage('img6', 290, 360, 680, 310, 20); 
+        await drawSmartImage('img7', 290, 690, 680, 280, 20); 
+
+        // 左侧汽车三连图
         await drawSmartImage('img2', 30, 270, 240, 240, 15);
-        await drawSmartImage('img3', 30, 540, 240, 240, 15);
-        await drawSmartImage('img4', 30, 810, 240, 240, 15);
+        await drawSmartImage('img3', 30, 530, 240, 240, 15);
+        await drawSmartImage('img4', 30, 790, 240, 240, 15);
 
-        // 右侧区域
-        await drawSmartImage('img1', 30, 30, 240, 220, 15);  // 头像
-        await drawSmartImage('img5', 290, 30, 680, 320, 20); // 驾照正
-        await drawSmartImage('img6', 290, 370, 680, 320, 20); // 驾照背
-        await drawSmartImage('img7', 290, 710, 680, 340, 20); // 路税
+        // 4. 在汽车背面图(img4)下方绘制双 Logo
+        // 位置计算：img4 的 y 是 790，h 是 240，所以下方起始于 1030
+        ctx.drawImage(logoSemsira, 45, 1050, 100, 100);
+        ctx.drawImage(logoSS6, 155, 1050, 100, 100);
 
-        // 4. 绘制底部文字
+        // 5. 绘制底部文字
         ctx.fillStyle = "black";
-        ctx.font = "32px 'SemsiraFont', sans-serif";
+        ctx.font = "34px 'SemsiraFont'";
         ctx.textAlign = "center";
         ctx.fillText("SEKOLAH MENENGAH KEBANGSAAN SYED SIRAJUDDIN", W/2, H - 60);
 
-        // 5. 自动下载
         exportImage();
     }
 
+    // 辅助：加载静态图片
+    function loadImage(src) {
+        return new Promise(res => {
+            const img = new Image();
+            img.onload = () => res(img);
+            img.src = src;
+        });
+    }
+
+    // 核心绘制逻辑：带边框、圆角、等比缩放
     async function drawSmartImage(inputId, x, y, w, h, r) {
         const file = document.getElementById(inputId).files[0];
         if (!file) return;
@@ -90,51 +112,43 @@
         });
 
         ctx.save();
-        
-        // --- 绘制 3px 黑色边框 ---
+        // 绘制 3px 黑色边框
         ctx.beginPath();
         drawRoundedRectPath(ctx, x - 3, y - 3, w + 6, h + 6, r + 3);
         ctx.fillStyle = "black";
         ctx.fill();
 
-        // --- 裁剪图片区域 ---
+        // 裁剪圆角矩形
         ctx.beginPath();
         drawRoundedRectPath(ctx, x, y, w, h, r);
         ctx.clip();
 
-        // --- 等比例缩放填充 (Cover 逻辑) ---
+        // Object-fit: cover 算法
         const imgRatio = img.width / img.height;
         const targetRatio = w / h;
-        let drawW, drawH, drawX, drawY;
-
+        let dW, dH, dX, dY;
         if (imgRatio > targetRatio) {
-            drawH = h;
-            drawW = h * imgRatio;
-            drawX = x - (drawW - w) / 2;
-            drawY = y;
+            dH = h; dW = h * imgRatio;
+            dX = x - (dW - w) / 2; dY = y;
         } else {
-            drawW = w;
-            drawH = w / imgRatio;
-            drawX = x;
-            drawY = y - (drawH - h) / 2;
+            dW = w; dH = w / imgRatio;
+            dX = x; dY = y - (dH - h) / 2;
         }
-
-        ctx.drawImage(img, drawX, drawY, drawW, drawH);
+        ctx.drawImage(img, dX, dY, dW, dH);
         ctx.restore();
     }
 
-    // 绘制圆角矩形路径辅助函数
-    function drawRoundedRectPath(context, x, y, w, h, r) {
-        context.moveTo(x + r, y);
-        context.arcTo(x + w, y, x + w, y + h, r);
-        context.arcTo(x + w, y + h, x, y + h, r);
-        context.arcTo(x, y + h, x, y, r);
-        context.arcTo(x, y, x + w, y, r);
-        context.closePath();
+    function drawRoundedRectPath(c, x, y, w, h, r) {
+        c.moveTo(x + r, y);
+        c.arcTo(x + w, y, x + w, y + h, r);
+        c.arcTo(x + w, y + h, x, y + h, r);
+        c.arcTo(x, y + h, x, y, r);
+        c.arcTo(x, y, x + w, y, r);
+        c.closePath();
     }
 
     function exportImage() {
-        const name = document.getElementById('fileName').value || 'result';
+        const name = document.getElementById('fileName').value || 'SMKSS_Result';
         const link = document.createElement('a');
         link.download = name + '.png';
         link.href = canvas.toDataURL('image/png');
