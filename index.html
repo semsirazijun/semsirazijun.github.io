@@ -7,230 +7,100 @@
     <link rel="icon" type="image/png" href="semsira.png">
     <style>
         body {
-            margin: 0;
-            padding: 0;
+            margin: 0; padding: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #0a0a0a; /* 纯黑背景更显专业 */
+            background: #0a0a0a;
             height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            overflow: hidden;
+            display: flex; justify-content: center; align-items: center;
+            color: white; overflow: hidden;
         }
-
-        /* 登录卡片美化 - 延续黑橘配色 */
         .login-card {
-            background: #181818;
-            padding: 45px;
-            border-radius: 24px;
+            background: #181818; padding: 45px; border-radius: 24px;
             box-shadow: 0 20px 50px rgba(0,0,0,0.8);
-            text-align: center;
-            width: 360px;
-            border: 1px solid #222;
-            position: relative;
-            transition: border-color 0.3s;
+            text-align: center; width: 360px;
+            border: 1px solid #222; transition: border-color 0.3s;
         }
-
-        .login-card:hover {
-            border-color: #e67e22;
-        }
-
-        .logo {
-            width: 110px;
-            height: 110px;
-            margin-bottom: 25px;
-            filter: drop-shadow(0 0 15px rgba(230, 126, 34, 0.4));
-        }
-
-        h2 {
-            margin: 0 0 8px 0;
-            font-size: 26px;
-            color: #ff8c00;
-            font-weight: 800;
-            letter-spacing: 1px;
-        }
-
-        p {
-            font-size: 13px;
-            color: #666;
-            margin-bottom: 35px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .input-group {
-            position: relative;
-            margin-bottom: 20px;
-        }
-
+        .login-card:hover { border-color: #e67e22; }
+        .logo { width: 110px; height: 110px; margin-bottom: 25px; filter: drop-shadow(0 0 15px rgba(230, 126, 34, 0.4)); }
+        h2 { margin: 0 0 8px 0; font-size: 26px; color: #ff8c00; font-weight: 800; letter-spacing: 1px; }
+        p { font-size: 13px; color: #666; margin-bottom: 35px; text-transform: uppercase; letter-spacing: 1px; }
         input {
-            width: 100%;
-            padding: 16px;
-            border-radius: 10px;
-            border: 1px solid #333;
-            background: #0f0f0f;
-            color: white;
-            box-sizing: border-box;
-            font-size: 16px;
-            text-align: center;
-            transition: all 0.3s ease;
+            width: 100%; padding: 16px; border-radius: 10px; border: 1px solid #333;
+            background: #0f0f0f; color: white; box-sizing: border-box;
+            font-size: 16px; text-align: center; transition: all 0.3s ease;
         }
-
-        input:focus {
-            outline: none;
-            border-color: #e67e22;
-            box-shadow: 0 0 15px rgba(230, 126, 34, 0.2);
-            background: #000;
-        }
-
+        input:focus { outline: none; border-color: #e67e22; box-shadow: 0 0 15px rgba(230, 126, 34, 0.2); }
         button {
-            width: 100%;
-            padding: 16px;
-            background: #e67e22;
-            border: none;
-            color: white;
-            font-weight: bold;
-            font-size: 15px;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-top: 10px;
+            width: 100%; padding: 16px; background: #e67e22; border: none;
+            color: white; font-weight: bold; font-size: 15px; border-radius: 10px;
+            cursor: pointer; transition: all 0.3s ease; text-transform: uppercase;
+            letter-spacing: 1px; margin-top: 10px;
         }
-
-        button:hover {
-            background: #d35400;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(211, 84, 0, 0.4);
-        }
-
-        button:active {
-            transform: translateY(0);
-        }
-
-        #status-msg {
-            margin-top: 20px;
-            font-size: 12px;
-            min-height: 18px;
-            font-weight: bold;
-        }
-
-        .error { color: #ff4d4d; animation: shake 0.3s; }
+        button:hover { background: #d35400; transform: translateY(-2px); }
+        #status-msg { margin-top: 20px; font-size: 12px; min-height: 18px; font-weight: bold; }
+        .error { color: #ff4d4d; }
         .loading { color: #ff8c00; }
-        
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
-
-        .footer {
-            margin-top: 30px;
-            font-size: 10px;
-            color: #444;
-            line-height: 1.6;
-        }
+        .footer { margin-top: 30px; font-size: 10px; color: #444; line-height: 1.6; }
     </style>
 </head>
-<body oncontextmenu="return false" onselectstart="return false">
+<body oncontextmenu="return false">
 
 <div class="login-card">
     <img src="semsira.png" alt="Logo" class="logo">
     <h2>DASHBOARD</h2>
     <p>Secure Access Point</p>
-    
-    <div class="input-group">
-        <input type="password" id="passkey" placeholder="ACCESS KEY" autocomplete="off" onkeypress="if(event.key==='Enter') verify()">
-    </div>
-    
+    <input type="password" id="passkey" placeholder="ACCESS KEY" onkeypress="if(event.key==='Enter') verify()">
     <button id="loginBtn" onclick="verify()">Initialize</button>
-    
     <div id="status-msg"></div>
-
-    <div class="footer">
-        CLOUD SYNTHESIS ENGINE v3.0<br>
-        SECURE DATA ENCRYPTION ENABLED<br>
-        &copy; 2026 SEMSIRA | ZIJUN
-    </div>
+    <div class="footer">CLOUD SYNTHESIS ENGINE v3.0<br>&copy; 2026 SEMSIRA | ZIJUN</div>
 </div>
 
 <script>
-    // === CONFIGURATION ===
     const REPO_OWNER = "semsirazijun"; 
     const REPO_NAME = "semsirazijun.github.io"; 
     const KEY_FILE_PATH = "keys.txt"; 
     const TARGET_PAGE = 'sks_panel_982x.html'; 
-    // =====================
 
-    // --- SECURITY: ANTI-DEBUG & ANTI-F12 ---
-    // Disable keyboard shortcuts
-    document.onkeydown = function (e) {
-        if (e.keyCode === 123) return false; // F12
-        if (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) return false; // Ctrl+Shift+I/J
-        if (e.ctrlKey && e.keyCode === 85) return false; // Ctrl+U
+    // 禁止 F12
+    document.onkeydown = function(e) {
+        if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74))) return false;
     };
 
-    // Infinite Debugger Trap (Stops script if DevTools is opened)
-    setInterval(function() {
-        (function() {}.constructor("debugger")());
-    }, 100);
-
-    // --- VERIFICATION LOGIC ---
     async function verify() {
         const input = document.getElementById('passkey').value.trim();
         const msg = document.getElementById('status-msg');
         const btn = document.getElementById('loginBtn');
 
-        if (!input) {
-            showMsg("KEY REQUIRED", "error");
-            return;
-        }
+        if (!input) { showMsg("KEY REQUIRED", "error"); return; }
 
         btn.disabled = true;
-        btn.innerText = "AUTHENTICATING...";
-        showMsg("Connecting to Secure Cloud...", "loading");
+        showMsg("AUTHENTICATING...", "loading");
 
         try {
-            // Fetch keys with timestamp to prevent cache
             const rawUrl = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/main/${KEY_FILE_PATH}?t=${new Date().getTime()}`;
             const response = await fetch(rawUrl);
-            
-            if (!response.ok) throw new Error("UPSTREAM_ERROR");
-
             const data = await response.text();
             const validKeys = data.split(/\r?\n/).map(k => k.trim()).filter(k => k !== "");
 
             if (validKeys.includes(input)) {
                 showMsg("SUCCESS. REDIRECTING...", "loading");
-                
-                // Create a Time-based Token
-                const token = btoa("VALID_" + new Date().getDate());
-                sessionStorage.setItem('access_granted', token);
-                
-                setTimeout(() => {
-                    window.location.replace(TARGET_PAGE);
-                }, 800);
+                sessionStorage.setItem('access_granted', 'true'); // 存入简单标记
+                setTimeout(() => { window.location.replace(TARGET_PAGE); }, 800);
             } else {
-                showMsg("ACCESS DENIED: INVALID KEY", "error");
+                showMsg("INVALID KEY", "error");
                 btn.disabled = false;
-                btn.innerText = "INITIALIZE";
                 document.getElementById('passkey').value = "";
             }
         } catch (err) {
-            showMsg("WIFI FAILURE OR TIMEOUT", "error");
+            showMsg("CONNECTION ERROR", "error");
             btn.disabled = false;
-            btn.innerText = "INITIALIZE";
         }
     }
 
     function showMsg(text, type) {
         const msg = document.getElementById('status-msg');
-        msg.innerText = text;
-        msg.className = type;
+        msg.innerText = text; msg.className = type;
     }
 </script>
-
 </body>
 </html>
