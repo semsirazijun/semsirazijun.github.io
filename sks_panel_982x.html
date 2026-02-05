@@ -103,7 +103,6 @@
 
         .btn-generate { background: #e67e22; box-shadow: 0 4px 15px rgba(230, 126, 34, 0.3); }
         .btn-generate:hover { background: #d35400; transform: translateY(-2px); }
-        .btn-generate:active { transform: translateY(0); }
         
         .btn-download { background: #27ae60; }
         .btn-download:disabled { background: #333; color: #555; cursor: not-allowed; box-shadow: none; }
@@ -119,7 +118,7 @@
         }
 
         canvas { 
-            border: 1px solid #222; 
+            border: 2px dashed #444; 
             box-shadow: 0 20px 60px rgba(0,0,0,1);
             background: #1a1a1a;
             max-width: 95%;   
@@ -131,7 +130,7 @@
         .status-bar { font-size: 10px; color: #444; margin-top: 15px; text-align: center; border-top: 1px solid #222; padding-top: 10px; }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false" onselectstart="return false">
 
     <div class="main-container">
         <div class="left-panel">
@@ -144,14 +143,14 @@
                 <div class="input-item"><label>5. Driving License (Front)</label><input type="file" id="img5" accept="image/*"></div>
                 <div class="input-item"><label>6. Driving License (Rear)</label><input type="file" id="img6" accept="image/*"></div>
                 <div class="input-item"><label>7. Road Tax Photo</label><input type="file" id="img7" accept="image/*"></div>
-                <div class="input-item"><label>8. Identity Card Number</label><input type="text" id="fileName" placeholder="Enter IC..."></div>
+                <div class="input-item"><label>8. Identity Card Number (Filename)</label><input type="text" id="fileName" placeholder="Enter IC..."></div>
             </div>
 
             <div class="button-group">
                 <button class="btn-generate" onclick="handleGenerate()">Render Preview</button>
                 <button class="btn-download" id="downloadBtn" onclick="exportImage()" disabled>Download Image</button>
             </div>
-            <div class="status-bar">System Ready | High Definition 300 DPI</div>
+            <div class="status-bar">Secure Mode Active | 300 DPI Rendering</div>
         </div>
 
         <div class="right-panel">
@@ -162,8 +161,25 @@
     </div>
 
 <script>
-    if (sessionStorage.getItem('access_granted') !== 'true') { window.location.href = 'index.html'; }
+    // --- SECURITY CHECK (TOKEN VALIDATION) ---
+    (function() {
+        const token = sessionStorage.getItem('access_granted');
+        const expected = btoa("VALID_" + new Date().getDate());
+        
+        if (!token || token !== expected) {
+            sessionStorage.clear();
+            window.location.replace('index.html');
+            return;
+        }
 
+        // Anti-Debug & Anti-F12
+        document.onkeydown = function (e) {
+            if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && e.keyCode === 73)) return false;
+        };
+        setInterval(function() { (function() {}.constructor("debugger")()); }, 100);
+    })();
+
+    // --- CANVAS ENGINE ---
     const canvas = document.getElementById('mainCanvas');
     const ctx = canvas.getContext('2d');
     const W = 2480; const H = 3508;
@@ -175,11 +191,11 @@
         ctx.fillStyle = "#333";
         ctx.font = "italic 80px sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText("Ready for rendering...", W/2, H/2);
+        ctx.fillText("READY FOR RENDERING...", W/2, H/2);
     }
     initCanvas();
 
-    // Drag and Drop
+    // Drag and Drop Logic
     document.querySelectorAll('.input-item').forEach(item => {
         const input = item.querySelector('input[type="file"]');
         item.addEventListener('dragover', (e) => { e.preventDefault(); item.classList.add('drag-over'); });
@@ -193,15 +209,15 @@
     async function handleGenerate() {
         const btn = event.target;
         const dlBtn = document.getElementById('downloadBtn');
-        btn.disabled = true; btn.innerText = "Synthesizing...";
+        btn.disabled = true; btn.innerText = "SYNTHESIZING...";
         
         try {
             await generate();
             dlBtn.disabled = false;
         } catch (err) {
-            alert("Error: " + err);
+            alert("Error during synthesis: " + err);
         } finally {
-            btn.disabled = false; btn.innerText = "Refresh Preview";
+            btn.disabled = false; btn.innerText = "REFRESH PREVIEW";
         }
     }
 
@@ -215,13 +231,13 @@
         grad.addColorStop(0, "#FFB347"); grad.addColorStop(1, "#FFCC33");
         ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
 
-        // Render Left side images (1:1)
+        // Render Left side images (1:1 Ratio Logic)
         await drawSmartImage('img1', 75, 75, 600, 660, 40);
         await drawSmartImage('img2', 75, 785, 600, 600, 40);
         await drawSmartImage('img3', 75, 1435, 600, 600, 40);
         await drawSmartImage('img4', 75, 2085, 600, 600, 40);
 
-        // Render Right side images (Adaptive)
+        // Render Right side images (Adaptive Height)
         const rightX = 725, rightWidth = 1680, spacing = 60;
         const h5 = await drawAdaptiveImage('img5', rightX, 75, rightWidth, 40);
         const y6 = 75 + h5 + (h5 > 0 ? spacing : 0);
@@ -234,15 +250,14 @@
         ctx.drawImage(logoSemsira, 120, logoY, 230, 230);
         ctx.drawImage(logoSS6, 380, logoY, 230, 230);
         
-        // Render Footer Text (Lowered as requested)
+        // Footer Text
         ctx.fillStyle = "black";
         ctx.font = "85px 'SemsiraFont'";
         ctx.textAlign = "center";
-        // Final position slightly lower than before
         ctx.fillText("SEKOLAH MENENGAH KEBANGSAAN SYED SIRAJUDDIN", W/2, 3445);
     }
 
-    // Helper functions
+    // --- HELPER FUNCTIONS ---
     async function drawAdaptiveImage(inputId, x, y, targetWidth, radius) {
         const file = document.getElementById(inputId).files[0];
         if (!file) return 0;
@@ -299,7 +314,8 @@
     function loadImage(src) { return new Promise(res => { const img = new Image(); img.onload = () => res(img); img.src = src; img.onerror = () => res(new Image()); }); }
 
     function exportImage() {
-        const name = document.getElementById('fileName').value || 'SMKSS_A4_Final';
+        const icNum = document.getElementById('fileName').value.trim();
+        const name = icNum || 'SMKSS_A4_Final';
         const link = document.createElement('a');
         link.download = name + '.png';
         link.href = canvas.toDataURL('image/png', 1.0);
