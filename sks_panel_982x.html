@@ -16,7 +16,6 @@
             border-right: 1px solid #222; box-shadow: 10px 0 30px rgba(0,0,0,0.5);
             display: flex; flex-direction: column;
         }
-        /* 黑橘色滚动条 */
         .left-panel::-webkit-scrollbar { width: 6px; }
         .left-panel::-webkit-scrollbar-track { background: #111; }
         .left-panel::-webkit-scrollbar-thumb { background: #e67e22; border-radius: 10px; }
@@ -24,14 +23,23 @@
         .right-panel { flex: 1; display: flex; align-items: center; justify-content: center; background: #0f0f0f; padding: 20px; }
         h2 { font-size: 22px; color: #ff8c00; margin-bottom: 20px; font-weight: 800; border-bottom: 1px solid #222; padding-bottom: 15px; }
         .controls { display: grid; gap: 14px; }
+        
+        /* 拖拽高亮的核心 CSS */
         .input-item { 
             display: flex; flex-direction: column; padding: 12px; border: 1px solid #333; 
-            border-radius: 10px; background: #222; transition: 0.3s;
+            border-radius: 10px; background: #222; transition: all 0.2s ease;
         }
-        .input-item:hover { border-color: #e67e22; }
+        .input-item.drag-over { 
+            border-color: #ff8c00 !important; 
+            background: rgba(255, 140, 0, 0.1) !important;
+            border-style: dashed !important;
+            transform: scale(1.02);
+        }
+
         label { font-size: 11px; color: #ff8c00; margin-bottom: 6px; font-weight: bold; text-transform: uppercase; }
-        input[type="file"] { color: #777; font-size: 11px; }
+        input[type="file"] { color: #777; font-size: 11px; cursor: pointer; }
         input[type="text"] { padding: 10px; border-radius: 6px; border: 1px solid #333; background: #111; color: white; outline: none; }
+        
         .button-group { margin-top: 25px; display: flex; flex-direction: column; gap: 12px; }
         button { 
             width: 100%; padding: 16px; border: none; color: white; font-weight: bold; 
@@ -41,6 +49,7 @@
         .btn-generate:hover { background: #d35400; }
         .btn-download { background: #27ae60; }
         .btn-download:disabled { background: #333; color: #555; }
+        
         canvas { border: 2px dashed #444; box-shadow: 0 20px 60px rgba(0,0,0,1); max-width: 95%; max-height: 92vh; object-fit: contain; }
         .status-bar { font-size: 10px; color: #444; margin-top: 15px; text-align: center; }
     </style>
@@ -71,7 +80,7 @@
     </div>
 
 <script>
-    // --- 权限检查 ---
+    // --- 权限与安全检查 ---
     (function() {
         if (sessionStorage.getItem('access_granted') !== 'true') {
             window.location.replace('index.html');
@@ -81,6 +90,17 @@
         };
         setInterval(function() { (function() {}.constructor("debugger")()); }, 100);
     })();
+
+    // --- 核心拖拽高亮逻辑 ---
+    document.querySelectorAll('.input-item').forEach(item => {
+        const input = item.querySelector('input[type="file"]');
+        item.addEventListener('dragover', (e) => { e.preventDefault(); item.classList.add('drag-over'); });
+        item.addEventListener('dragleave', () => { item.classList.remove('drag-over'); });
+        item.addEventListener('drop', (e) => {
+            e.preventDefault(); item.classList.remove('drag-over');
+            if (e.dataTransfer.files.length > 0) { input.files = e.dataTransfer.files; }
+        });
+    });
 
     const canvas = document.getElementById('mainCanvas');
     const ctx = canvas.getContext('2d');
@@ -133,7 +153,7 @@
         ctx.fillText("SEKOLAH MENENGAH KEBANGSAAN SYED SIRAJUDDIN", W/2, 3445);
     }
 
-    // --- 辅助工具函数 (保持原有逻辑) ---
+    // --- 辅助绘图函数 ---
     async function drawAdaptiveImage(inputId, x, y, targetWidth, radius) {
         const file = document.getElementById(inputId).files[0];
         if (!file) return 0;
