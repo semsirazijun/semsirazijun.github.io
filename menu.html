@@ -1,103 +1,115 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>SMKSS 高清合成工作台</title>
+    <title>SMKSS HD Synthesis System</title>
     <link rel="icon" type="image/png" href="semsira.png">
     <style>
         @font-face { font-family: 'SemsiraFont'; src: url('semsira.ttf'); }
         
         body { 
-            font-family: 'Segoe UI', system-ui, sans-serif; 
-            background: #121212; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: #0f0f0f; 
             color: #eee; 
             margin: 0;
             height: 100vh;
-            overflow: hidden; /* 防止整页滚动 */
+            overflow: hidden;
         }
 
-        /* 主容器左右布局 */
+        /* Layout Container */
         .main-container {
             display: flex;
             height: 100vh;
             width: 100vw;
         }
 
-        /* 左侧：控制面板 */
+        /* Left Panel: Controls */
         .left-panel {
-            width: 450px;
-            background: #1e1e1e;
-            padding: 20px;
-            overflow-y: auto; /* 只有这一块可以滚动 */
-            border-right: 1px solid #333;
-            box-shadow: 10px 0 30px rgba(0,0,0,0.3);
+            width: 420px;
+            background: #181818;
+            padding: 25px;
+            overflow-y: auto;
+            border-right: 1px solid #222;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.5);
             display: flex;
             flex-direction: column;
-            z-index: 10;
         }
 
-        /* 右侧：预览面板 */
+        /* Custom Scrollbar Styling (Black & Orange) */
+        .left-panel::-webkit-scrollbar { width: 6px; }
+        .left-panel::-webkit-scrollbar-track { background: #111; }
+        .left-panel::-webkit-scrollbar-thumb { 
+            background: #e67e22; 
+            border-radius: 10px;
+        }
+        .left-panel::-webkit-scrollbar-thumb:hover { background: #ff8c00; }
+
+        /* Right Panel: Preview */
         .right-panel {
             flex: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            background: #121212;
+            background: #0f0f0f;
             padding: 20px;
-            position: relative;
         }
 
-        h2 { font-size: 20px; color: #ff8c00; margin-top: 0; border-bottom: 1px solid #333; padding-bottom: 15px; }
+        h2 { font-size: 22px; color: #ff8c00; margin-top: 0; margin-bottom: 20px; font-weight: 800; letter-spacing: 1px; border-bottom: 1px solid #222; padding-bottom: 15px; }
 
         .controls { 
             display: grid; 
             grid-template-columns: 1fr; 
-            gap: 12px; 
+            gap: 14px; 
         }
 
         .input-item { 
             display: flex; 
             flex-direction: column; 
-            padding: 10px; 
-            border: 1px dashed #444; 
-            border-radius: 8px; 
-            background: #252525;
-            transition: 0.3s;
+            padding: 12px; 
+            border: 1px solid #333; 
+            border-radius: 10px; 
+            background: #222;
+            transition: all 0.3s ease;
         }
 
+        .input-item:hover { border-color: #e67e22; box-shadow: 0 0 10px rgba(230, 126, 34, 0.2); }
         .input-item.drag-over { border-color: #ff8c00; background: rgba(255, 140, 0, 0.1); }
         
-        label { font-size: 12px; color: #ff8c00; margin-bottom: 5px; font-weight: bold; }
-        input[type="file"] { color: #888; font-size: 11px; }
-        input[type="text"] { padding: 8px; border-radius: 4px; border: 1px solid #444; background: #111; color: white; }
+        label { font-size: 11px; color: #ff8c00; margin-bottom: 6px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
+        input[type="file"] { color: #777; font-size: 11px; cursor: pointer; }
+        input[type="text"] { padding: 10px; border-radius: 6px; border: 1px solid #333; background: #111; color: white; outline: none; transition: 0.2s; }
+        input[type="text"]:focus { border-color: #e67e22; }
 
         .button-group { 
-            margin-top: 20px;
+            margin-top: 25px;
             display: flex; 
             flex-direction: column;
-            gap: 10px; 
+            gap: 12px; 
         }
 
         button { 
             width: 100%;
-            padding: 14px; 
+            padding: 16px; 
             border: none; 
             color: white; 
             font-weight: bold; 
             font-size: 15px; 
-            border-radius: 6px; 
+            border-radius: 8px; 
             cursor: pointer; 
-            transition: 0.2s;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
         }
 
-        .btn-generate { background: #e67e22; }
-        .btn-generate:hover { background: #d35400; }
+        .btn-generate { background: #e67e22; box-shadow: 0 4px 15px rgba(230, 126, 34, 0.3); }
+        .btn-generate:hover { background: #d35400; transform: translateY(-2px); }
+        .btn-generate:active { transform: translateY(0); }
         
         .btn-download { background: #27ae60; }
-        .btn-download:disabled { background: #444; color: #777; cursor: not-allowed; }
+        .btn-download:disabled { background: #333; color: #555; cursor: not-allowed; box-shadow: none; }
+        .btn-download:not(:disabled):hover { background: #2ecc71; transform: translateY(-2px); }
 
-        /* Canvas 预览区域自适应缩放 */
+        /* Canvas Wrapper & Scaling */
         .canvas-wrapper {
             width: 100%;
             height: 100%;
@@ -107,38 +119,39 @@
         }
 
         canvas { 
-            border: 1px solid #444; 
-            box-shadow: 0 0 50px rgba(0,0,0,0.8);
-            background: #2a2a2a;
-            max-width: 95%;   /* 宽度不超过容器 */
-            max-height: 90vh; /* 高度不超过视口的 90% */
-            object-fit: contain; /* 保持比例 */
+            border: 1px solid #222; 
+            box-shadow: 0 20px 60px rgba(0,0,0,1);
+            background: #1a1a1a;
+            max-width: 95%;   
+            max-height: 92vh; 
+            object-fit: contain; 
+            border-radius: 4px;
         }
 
-        .status-bar { font-size: 11px; color: #666; margin-top: 10px; text-align: center; }
+        .status-bar { font-size: 10px; color: #444; margin-top: 15px; text-align: center; border-top: 1px solid #222; padding-top: 10px; }
     </style>
 </head>
 <body>
 
     <div class="main-container">
         <div class="left-panel">
-            <h2>SMKSS 合成工作台</h2>
+            <h2>DASHBOARD</h2>
             <div class="controls">
-                <div class="input-item" data-id="img1"><label>1. 头像照片</label><input type="file" id="img1" accept="image/*"></div>
-                <div class="input-item" data-id="img2"><label>2. 汽车正面 (1:1)</label><input type="file" id="img2" accept="image/*"></div>
-                <div class="input-item" data-id="img3"><label>3. 汽车侧面 (1:1)</label><input type="file" id="img3" accept="image/*"></div>
-                <div class="input-item" data-id="img4"><label>4. 汽车背面 (1:1)</label><input type="file" id="img4" accept="image/*"></div>
-                <div class="input-item" data-id="img5"><label>5. 驾照正面</label><input type="file" id="img5" accept="image/*"></div>
-                <div class="input-item" data-id="img6"><label>6. 驾照背面</label><input type="file" id="img6" accept="image/*"></div>
-                <div class="input-item" data-id="img7"><label>7. 路税照片</label><input type="file" id="img7" accept="image/*"></div>
-                <div class="input-item"><label>8. 导出文件名</label><input type="text" id="fileName" value="SMKSS_Final"></div>
+                <div class="input-item"><label>1. Profile Photo</label><input type="file" id="img1" accept="image/*"></div>
+                <div class="input-item"><label>2. Vehicle Front (1:1)</label><input type="file" id="img2" accept="image/*"></div>
+                <div class="input-item"><label>3. Vehicle Side (1:1)</label><input type="file" id="img3" accept="image/*"></div>
+                <div class="input-item"><label>4. Vehicle Rear (1:1)</label><input type="file" id="img4" accept="image/*"></div>
+                <div class="input-item"><label>5. Driving License (Front)</label><input type="file" id="img5" accept="image/*"></div>
+                <div class="input-item"><label>6. Driving License (Rear)</label><input type="file" id="img6" accept="image/*"></div>
+                <div class="input-item"><label>7. Road Tax Photo</label><input type="file" id="img7" accept="image/*"></div>
+                <div class="input-item"><label>8. Output Filename</label><input type="text" id="fileName" placeholder="Enter name..."></div>
             </div>
 
             <div class="button-group">
-                <button class="btn-generate" onclick="handleGenerate()">生成高清预览</button>
-                <button class="btn-download" id="downloadBtn" onclick="exportImage()" disabled>下载 A4 图像</button>
+                <button class="btn-generate" onclick="handleGenerate()">Render Preview</button>
+                <button class="btn-download" id="downloadBtn" onclick="exportImage()" disabled>Download Image</button>
             </div>
-            <div class="status-bar">系统准备就绪 | 300 DPI 高清模式</div>
+            <div class="status-bar">System Ready | High Definition 300 DPI</div>
         </div>
 
         <div class="right-panel">
@@ -157,16 +170,16 @@
     canvas.width = W; canvas.height = H;
 
     function initCanvas() {
-        ctx.fillStyle = "#2a2a2a";
+        ctx.fillStyle = "#1a1a1a";
         ctx.fillRect(0, 0, W, H);
-        ctx.fillStyle = "#444";
-        ctx.font = "100px sans-serif";
+        ctx.fillStyle = "#333";
+        ctx.font = "italic 80px sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText("预览区域 (等待生成)", W/2, H/2);
+        ctx.fillText("Ready for rendering...", W/2, H/2);
     }
     initCanvas();
 
-    // 拖拽上传支持
+    // Drag and Drop
     document.querySelectorAll('.input-item').forEach(item => {
         const input = item.querySelector('input[type="file"]');
         item.addEventListener('dragover', (e) => { e.preventDefault(); item.classList.add('drag-over'); });
@@ -180,15 +193,15 @@
     async function handleGenerate() {
         const btn = event.target;
         const dlBtn = document.getElementById('downloadBtn');
-        btn.disabled = true; btn.innerText = "正在合成图像...";
+        btn.disabled = true; btn.innerText = "Synthesizing...";
         
         try {
             await generate();
             dlBtn.disabled = false;
         } catch (err) {
-            alert("错误: " + err);
+            alert("Error: " + err);
         } finally {
-            btn.disabled = false; btn.innerText = "更新预览图像";
+            btn.disabled = false; btn.innerText = "Refresh Preview";
         }
     }
 
@@ -197,18 +210,18 @@
         const logoSemsira = await loadImage('semsira.png');
         const logoSS6 = await loadImage('ss6.png');
 
-        // 背景
+        // Background Gradient
         const grad = ctx.createLinearGradient(0, 0, 0, H);
         grad.addColorStop(0, "#FFB347"); grad.addColorStop(1, "#FFCC33");
         ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
 
-        // 左侧模块 (img1-4)
+        // Render Left side images (1:1)
         await drawSmartImage('img1', 75, 75, 600, 660, 40);
         await drawSmartImage('img2', 75, 785, 600, 600, 40);
         await drawSmartImage('img3', 75, 1435, 600, 600, 40);
         await drawSmartImage('img4', 75, 2085, 600, 600, 40);
 
-        // 右侧模块 (img5-7)
+        // Render Right side images (Adaptive)
         const rightX = 725, rightWidth = 1680, spacing = 60;
         const h5 = await drawAdaptiveImage('img5', rightX, 75, rightWidth, 40);
         const y6 = 75 + h5 + (h5 > 0 ? spacing : 0);
@@ -216,18 +229,20 @@
         const y7 = y6 + h6 + (h6 > 0 ? spacing : 0);
         const h7 = await drawAdaptiveImage('img7', rightX, y7, rightWidth, 40);
 
-        // Logo & Footer
+        // Render Logos
         const logoY = 2085 + 600 + 45; 
         ctx.drawImage(logoSemsira, 120, logoY, 230, 230);
         ctx.drawImage(logoSS6, 380, logoY, 230, 230);
         
+        // Render Footer Text (Lowered as requested)
         ctx.fillStyle = "black";
         ctx.font = "85px 'SemsiraFont'";
         ctx.textAlign = "center";
-        ctx.fillText("SEKOLAH MENENGAH KEBANGSAAN SYED SIRAJUDDIN", W/2, 3420);
+        // Final position slightly lower than before
+        ctx.fillText("SEKOLAH MENENGAH KEBANGSAAN SYED SIRAJUDDIN", W/2, 3445);
     }
 
-    // 辅助函数 (保持不变但确保逻辑一致)
+    // Helper functions
     async function drawAdaptiveImage(inputId, x, y, targetWidth, radius) {
         const file = document.getElementById(inputId).files[0];
         if (!file) return 0;
@@ -284,7 +299,7 @@
     function loadImage(src) { return new Promise(res => { const img = new Image(); img.onload = () => res(img); img.src = src; img.onerror = () => res(new Image()); }); }
 
     function exportImage() {
-        const name = document.getElementById('fileName').value || 'Final';
+        const name = document.getElementById('fileName').value || 'SMKSS_A4_Final';
         const link = document.createElement('a');
         link.download = name + '.png';
         link.href = canvas.toDataURL('image/png', 1.0);
