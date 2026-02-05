@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,42 +10,53 @@
             margin: 0;
             padding: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1a1a1a 0%, #2c3e50 100%);
+            background: #0a0a0a; /* 纯黑背景更显专业 */
             height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
             color: white;
+            overflow: hidden;
         }
 
+        /* 登录卡片美化 - 延续黑橘配色 */
         .login-card {
-            background: rgba(51, 51, 51, 0.95);
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            background: #181818;
+            padding: 45px;
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
             text-align: center;
-            width: 350px;
-            border: 1px solid rgba(230, 126, 34, 0.3);
-            backdrop-filter: blur(10px);
+            width: 360px;
+            border: 1px solid #222;
+            position: relative;
+            transition: border-color 0.3s;
+        }
+
+        .login-card:hover {
+            border-color: #e67e22;
         }
 
         .logo {
-            width: 100px;
-            height: 100px;
-            margin-bottom: 20px;
-            filter: drop-shadow(0 0 10px rgba(230, 126, 34, 0.5));
+            width: 110px;
+            height: 110px;
+            margin-bottom: 25px;
+            filter: drop-shadow(0 0 15px rgba(230, 126, 34, 0.4));
         }
 
         h2 {
-            margin: 0 0 10px 0;
-            font-size: 24px;
+            margin: 0 0 8px 0;
+            font-size: 26px;
             color: #ff8c00;
+            font-weight: 800;
+            letter-spacing: 1px;
         }
 
         p {
-            font-size: 14px;
-            color: #aaa;
-            margin-bottom: 30px;
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 35px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .input-group {
@@ -55,133 +66,162 @@
 
         input {
             width: 100%;
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #444;
-            background: #222;
+            padding: 16px;
+            border-radius: 10px;
+            border: 1px solid #333;
+            background: #0f0f0f;
             color: white;
             box-sizing: border-box;
             font-size: 16px;
             text-align: center;
-            transition: 0.3s;
+            transition: all 0.3s ease;
         }
 
         input:focus {
             outline: none;
             border-color: #e67e22;
-            box-shadow: 0 0 8px rgba(230, 126, 34, 0.4);
+            box-shadow: 0 0 15px rgba(230, 126, 34, 0.2);
+            background: #000;
         }
 
         button {
             width: 100%;
-            padding: 15px;
+            padding: 16px;
             background: #e67e22;
             border: none;
             color: white;
             font-weight: bold;
-            font-size: 16px;
-            border-radius: 8px;
+            font-size: 15px;
+            border-radius: 10px;
             cursor: pointer;
-            transition: 0.3s;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 10px;
         }
 
         button:hover {
             background: #d35400;
             transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(211, 84, 0, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
         }
 
         #status-msg {
-            margin-top: 15px;
-            font-size: 13px;
+            margin-top: 20px;
+            font-size: 12px;
             min-height: 18px;
+            font-weight: bold;
         }
 
-        .error { color: #ff4d4d; }
+        .error { color: #ff4d4d; animation: shake 0.3s; }
         .loading { color: #ff8c00; }
         
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
         .footer {
-            margin-top: 20px;
-            font-size: 11px;
-            color: #666;
+            margin-top: 30px;
+            font-size: 10px;
+            color: #444;
+            line-height: 1.6;
         }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false" onselectstart="return false">
 
 <div class="login-card">
     <img src="semsira.png" alt="Logo" class="logo">
-    <h2>Identity Verification</h2>
-    <p>Enter the password to enter the system</p>
+    <h2>DASHBOARD</h2>
+    <p>Secure Access Point</p>
     
     <div class="input-group">
-        <input type="password" id="passkey" placeholder="Access Key" onkeypress="if(event.key==='Enter') verify()">
+        <input type="password" id="passkey" placeholder="ACCESS KEY" autocomplete="off" onkeypress="if(event.key==='Enter') verify()">
     </div>
     
-    <button id="loginBtn" onclick="verify()">Enter</button>
+    <button id="loginBtn" onclick="verify()">Initialize</button>
     
     <div id="status-msg"></div>
 
     <div class="footer">
-        Cloud Verify System v2.0<br>
-        Connected to GitHub Repository<br>
-        Copyright by Semsira | ZiJun 2026
+        CLOUD SYNTHESIS ENGINE v3.0<br>
+        SECURE DATA ENCRYPTION ENABLED<br>
+        &copy; 2026 SEMSIRA | ZIJUN
     </div>
 </div>
 
 <script>
-    // === 配置区域 ===
-    const REPO_OWNER = "semsirazijun"; // 替换为您的 GitHub 用户名
-    const REPO_NAME = "semsirazijun.github.io"; // 替换为您的 仓库名称
-    const KEY_FILE_PATH = "keys.txt"; // 密码文件名
-    // === === === ===
+    // === CONFIGURATION ===
+    const REPO_OWNER = "semsirazijun"; 
+    const REPO_NAME = "semsirazijun.github.io"; 
+    const KEY_FILE_PATH = "keys.txt"; 
+    const TARGET_PAGE = 'sks_panel_982x.html'; 
+    // =====================
 
+    // --- SECURITY: ANTI-DEBUG & ANTI-F12 ---
+    // Disable keyboard shortcuts
+    document.onkeydown = function (e) {
+        if (e.keyCode === 123) return false; // F12
+        if (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) return false; // Ctrl+Shift+I/J
+        if (e.ctrlKey && e.keyCode === 85) return false; // Ctrl+U
+    };
+
+    // Infinite Debugger Trap (Stops script if DevTools is opened)
+    setInterval(function() {
+        (function() {}.constructor("debugger")());
+    }, 100);
+
+    // --- VERIFICATION LOGIC ---
     async function verify() {
         const input = document.getElementById('passkey').value.trim();
         const msg = document.getElementById('status-msg');
         const btn = document.getElementById('loginBtn');
 
         if (!input) {
-            showMsg("Password...", "error");
+            showMsg("KEY REQUIRED", "error");
             return;
         }
 
-        // 锁定界面
         btn.disabled = true;
-        btn.innerText = "Verify...";
-        showMsg("Matching...", "loading");
+        btn.innerText = "AUTHENTICATING...";
+        showMsg("Connecting to Secure Cloud...", "loading");
 
         try {
-            // 构建 raw 内容地址，添加时间戳避免浏览器缓存旧密码
+            // Fetch keys with timestamp to prevent cache
             const rawUrl = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/main/${KEY_FILE_PATH}?t=${new Date().getTime()}`;
-            
             const response = await fetch(rawUrl);
             
-            if (!response.ok) {
-                throw new Error("Failure to get key");
-            }
+            if (!response.ok) throw new Error("UPSTREAM_ERROR");
 
             const data = await response.text();
-            // 处理文件内容：拆分行、去空格、过滤空行
             const validKeys = data.split(/\r?\n/).map(k => k.trim()).filter(k => k !== "");
 
             if (validKeys.includes(input)) {
-                showMsg("Success, Login...", "loading");
-                sessionStorage.setItem('access_granted', 'true');
+                showMsg("SUCCESS. REDIRECTING...", "loading");
                 
-                // 延迟一小会儿让用户看到成功信息
+                // Create a Time-based Token
+                const token = btoa("VALID_" + new Date().getDate());
+                sessionStorage.setItem('access_granted', token);
+                
                 setTimeout(() => {
-                    window.location.href = 'menu.html';
+                    window.location.replace(TARGET_PAGE);
                 }, 800);
             } else {
-                showMsg("Password error", "error");
+                showMsg("ACCESS DENIED: INVALID KEY", "error");
                 btn.disabled = false;
-                btn.innerText = "Enter";
+                btn.innerText = "INITIALIZE";
                 document.getElementById('passkey').value = "";
             }
         } catch (err) {
-            showMsg("Wifi Failure: " + err.message, "error");
+            showMsg("WIFI FAILURE OR TIMEOUT", "error");
             btn.disabled = false;
-            btn.innerText = "Enter";
+            btn.innerText = "INITIALIZE";
         }
     }
 
